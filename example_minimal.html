@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CRMIPChart Minimal Example</title>
+  <script src="https://d3js.org/d3.v7.min.js"></script>
+  <script src="./crmip_chart.umd.js"></script>
+  <style>
+    :root {
+      --bg-color: #f8fafc;
+      --panel-bg: rgba(255, 255, 255, 0.95);
+      --text-primary: #0f172a;
+      --text-secondary: #64748b;
+
+      --inj-color: #0ea5e9;
+      --oil-color: #d97706;
+      --water-color: #1e40af;
+
+      --link-color: #3b82f6;
+      --link-highlight: #2563eb;
+      --hover-color: #f59e0b;
+      --select-color: #8b5cf6;
+    }
+
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: var(--bg-color);
+      margin: 0;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      padding: 10px 16px;
+      background: var(--panel-bg);
+      border-bottom: 1px solid #e2e8f0;
+      color: var(--text-primary);
+      font-weight: 700;
+    }
+
+    #chart-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      background-image: radial-gradient(#cbd5e1 1.5px, transparent 1.5px);
+      background-size: 30px 30px;
+    }
+
+    /* These classnames match the existing chart styles */
+    .link-visible {
+      fill: none;
+      stroke: var(--link-color);
+      stroke-linecap: round;
+      opacity: 0.5;
+    }
+    .link-underlay {
+      fill: none;
+      stroke: rgba(255,255,255,0.95);
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      opacity: 1;
+      pointer-events: none;
+    }
+    .link-overlay { fill: none; stroke: transparent; cursor: pointer; }
+
+    .link-text {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 12px;
+      fill: #1e40af;
+      text-anchor: middle;
+      pointer-events: none;
+      paint-order: stroke;
+      stroke: #ffffff;
+      stroke-width: 4px;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      font-weight: 700;
+      opacity: 1;
+    }
+
+    .node-text-group { pointer-events: none; }
+    .node-id {
+      font-size: 11px;
+      font-weight: 800;
+      fill: #0f172a;
+      text-anchor: middle;
+      paint-order: stroke;
+      stroke: rgba(255,255,255,0.9);
+      stroke-width: 3px;
+    }
+    .node-divider { stroke: #64748b; stroke-width: 1px; opacity: 0.6; }
+    .node-metric {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      font-size: 10px;
+      font-weight: 700;
+      text-anchor: middle;
+      paint-order: stroke;
+      stroke: rgba(255,255,255,0.9);
+      stroke-width: 2.5px;
+    }
+
+    .dimmed { opacity: 0.1 !important; }
+
+    #tooltip {
+      position: absolute;
+      background: rgba(255, 255, 255, 0.98);
+      border: 1px solid #e2e8f0;
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      pointer-events: none;
+      opacity: 0;
+      z-index: 9999;
+      min-width: 150px;
+      transition: opacity 0.15s ease;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    }
+    .tooltip-header {
+      font-weight: 700;
+      color: #0f172a;
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #f1f5f9;
+      font-size: 13px;
+    }
+    .tooltip-row { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
+    .tooltip-label { color: #64748b; }
+    .tooltip-val { font-family: ui-monospace, monospace; font-weight: 600; color: #0f172a; }
+  </style>
+</head>
+<body>
+  <header>CRMIPChart Minimal Example (2 injectors → 6 producers, 1 producer affected by 2 injectors)</header>
+  <div id="chart-container"></div>
+  <div id="tooltip"></div>
+
+  <script>
+    // Tổng quan: có 3 thứ chính để vẽ
+    // 1) Injector (node)
+    // 2) Producer (node)
+    // 3) Link (connectivity) có gain
+
+    // Ví dụ mở rộng:
+    // - 2 injector: I429, I430
+    // - 6 producer
+    // - 1 producer (P9002BB) chịu ảnh hưởng của cả 2 injector
+
+    // Style mới (phân biệt rõ class vs instance):
+    // - Injector/Producer là class, tạo instance bằng `new`
+    // - Link là class, tạo instance bằng `new`
+
+    const I429 = new CRMIPChart.Injector('I429', 200.7);
+    const I430 = new CRMIPChart.Injector('I430', 155.2);
+
+    const P6001 = new CRMIPChart.Producer('P6001', 56.6, { oil: 12.5, wc: 78.0 });
+    const P9002BB = new CRMIPChart.Producer('P9002BB', 78.5, { oil: 19.7, wc: 74.9 });
+    const P423 = new CRMIPChart.Producer('P423', 52.2, { oil: 9.3, wc: 82.2 });
+    const P7007 = new CRMIPChart.Producer('P7007', 41.0, { oil: 7.1, wc: 84.5 });
+    const P8010 = new CRMIPChart.Producer('P8010', 63.4, { oil: 14.2, wc: 76.8 });
+    const P9011 = new CRMIPChart.Producer('P9011', 35.7, { oil: 5.2, wc: 88.1 });
+
+    // Link = bản ghi many-to-many (Injector ↔ Producer) + gain
+    const links = [
+      // Injector I429
+      new CRMIPChart.Link(I429, P6001, 0.030),
+      new CRMIPChart.Link(I429, P9002BB, 0.005),
+      new CRMIPChart.Link(I429, P423, 0.002),
+      new CRMIPChart.Link(I429, P8010, 0.004),
+
+      // Injector I430
+      new CRMIPChart.Link(I430, P9002BB, 0.012), // producer này chịu ảnh hưởng 2 injector
+      new CRMIPChart.Link(I430, P7007, 0.003),
+      new CRMIPChart.Link(I430, P9011, 0.0015),
+    ];
+
+    // Render
+    CRMIPChart.render('#chart-container', {
+      nodes: [I429, I430, P6001, P9002BB, P423, P7007, P8010, P9011],
+      links,
+    }, {
+      layout: { mode: 'force', width: 1200, height: 900 },
+      gainEps: 1e-12,
+      format: { pctMinDisplay: 0.1, pctDecimals: 1, volDecimals: 1 },
+      enableDrag: true,
+    });
+  </script>
+</body>
+</html>
