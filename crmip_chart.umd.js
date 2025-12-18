@@ -363,7 +363,14 @@
           .style('left', (event.pageX + 20) + 'px')
           .style('top', (event.pageY - 20) + 'px');
       })
-      .on('mouseout', function () {
+      .on('mouseout', function (event, d) {
+        d.__hover = false;
+        global.d3.select(this).attr('transform', `translate(${d.x},${d.y}) scale(1)`);
+        if (isLocked()) {
+          highlightNode(lockedNode);
+        } else {
+          resetHighlight();
+        }
         const tooltipEl = document.getElementById('tooltip');
         if (tooltipEl) global.d3.select(tooltipEl).style('opacity', 0);
       });

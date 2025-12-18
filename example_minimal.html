@@ -67,7 +67,7 @@
 
     .link-text {
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      font-size: 12px;
+      font-size: 16px;
       fill: #1e40af;
       text-anchor: middle;
       pointer-events: none;
@@ -82,7 +82,7 @@
 
     .node-text-group { pointer-events: none; }
     .node-id {
-      font-size: 11px;
+      font-size: 14px;
       font-weight: 800;
       fill: #0f172a;
       text-anchor: middle;
@@ -93,7 +93,7 @@
     .node-divider { stroke: #64748b; stroke-width: 1px; opacity: 0.6; }
     .node-metric {
       font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      font-size: 10px;
+      font-size: 12px;
       font-weight: 700;
       text-anchor: middle;
       paint-order: stroke;
@@ -128,11 +128,60 @@
     .tooltip-row { display: flex; justify-content: space-between; gap: 12px; margin-bottom: 4px; }
     .tooltip-label { color: #64748b; }
     .tooltip-val { font-family: ui-monospace, monospace; font-weight: 600; color: #0f172a; }
+
+    #legend {
+      background: var(--panel-bg);
+      padding: 10px 20px;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      z-index: 100;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .legend-color {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      border: 1px solid rgba(0,0,0,0.1);
+    }
+    .legend-line {
+      width: 24px;
+      height: 3px;
+      border-radius: 2px;
+    }
   </style>
 </head>
 <body>
   <header>CRMIPChart Minimal Example (2 injectors → 6 producers, 1 producer affected by 2 injectors)</header>
   <div id="chart-container"></div>
+  
+  <div id="legend">
+    <div class="legend-item">
+      <span class="legend-color" style="background: var(--inj-color); box-shadow: 0 0 0 3px rgba(14, 165, 233, 0.2);"></span>
+      <span>Injector (Water Injection)</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-color" style="background: var(--oil-color);"></span>
+      <span>Producer (Oil)</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-color" style="background: var(--water-color);"></span>
+      <span>Producer (Water Cut)</span>
+    </div>
+    <div class="legend-item">
+      <span class="legend-line" style="background: var(--link-color);"></span>
+      <span>Connectivity (Gain)</span>
+    </div>
+  </div>
+
   <div id="tooltip"></div>
 
   <script>
